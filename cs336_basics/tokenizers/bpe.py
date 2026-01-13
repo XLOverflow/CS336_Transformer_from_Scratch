@@ -5,8 +5,6 @@ from collections import Counter
 import os
 import sys
 import gc
-import pickle
-import hashlib
 
 # Standard BPE tokenization pattern for GPT-2
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
@@ -14,20 +12,14 @@ PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s
 class BPETokenizerTrainer:
     def __init__(
         self,
-        vocab_size: int, 
+        vocab_size: int,
         special_tokens: List[str],
-        num_workers: int = None,
-        cache_dir: str = None
+        num_workers: int = None
     ):
         # parameters
         self.vocab_size = vocab_size
         self.special_tokens = special_tokens
-        self.cache_dir = cache_dir
-        
-        # Create cache directory if specified
-        if cache_dir:
-            os.makedirs(cache_dir, exist_ok=True)
-        
+
         # Auto-detect number of workers if not specified
         if num_workers is None:
             available_cpus = cpu_count()
@@ -40,62 +32,10 @@ class BPETokenizerTrainer:
         # derived parameters
         self.init_vocab_size = 256 + len(special_tokens)
         self.num_merges = vocab_size - self.init_vocab_size
-        
+
         # results
         self.vocab: Dict[int, bytes] = {}
         self.merges: List[Tuple[bytes, bytes]] = []
-
-    def _get_cache_key(self, input_path: str) -> str:
-        """Generate cache key based on file metadata and special tokens"""
-        # Use file size and modification time for speed (instead of hashing entire file)
-        stat = os.stat(input_path)
-        file_info = f"{stat.st_size}_{stat.st_mtime}"
-        
-        special_tokens_str = '|'.join(sorted(self.special_tokens))
-        cache_key = hashlib.md5(f"{file_info}_{special_tokens_str}".encode()).hexdigest()
-        return cache_key
-    
-    def _save_pretokenization_cache(self, pre_token_freq: Dict, cache_key: str):
-        """Save pre-tokenization results to disk"""
-        if not self.cache_dir:
-            return
-        
-        cache_file = os.path.join(self.cache_dir, f"pretok_{cache_key}.pkl")
-        print(f"[Train] Saving pre-tokenization cache to {cache_file}")
-        sys.stdout.flush()
-        
-        try:
-            with open(cache_file, 'wb') as f:
-                pickle.dump(pre_token_freq, f, protocol=pickle.HIGHEST_PROTOCOL)
-            print(f"[Train] Cache saved successfully")
-            sys.stdout.flush()
-        except Exception as e:
-            print(f"[Train] Warning: Failed to save cache: {e}")
-            sys.stdout.flush()
-    
-    def _load_pretokenization_cache(self, cache_key: str) -> Dict:
-        """Load pre-tokenization results from disk if available"""
-        if not self.cache_dir:
-            return None
-        
-        cache_file = os.path.join(self.cache_dir, f"pretok_{cache_key}.pkl")
-        
-        if not os.path.exists(cache_file):
-            return None
-        
-        print(f"[Train] Loading pre-tokenization cache from {cache_file}")
-        sys.stdout.flush()
-        
-        try:
-            with open(cache_file, 'rb') as f:
-                pre_token_freq = pickle.load(f)
-            print(f"[Train] Cache loaded: {len(pre_token_freq)} unique tokens, {sum(pre_token_freq.values()):,} total occurrences")
-            sys.stdout.flush()
-            return pre_token_freq
-        except Exception as e:
-            print(f"[Train] Warning: Failed to load cache: {e}")
-            sys.stdout.flush()
-            return None
 
     def _find_chunk_boundaries(self, file: BinaryIO) -> List[int]:
         """
@@ -218,39 +158,60 @@ class BPETokenizerTrainer:
         # Use Counter for efficient merging
         total_freq = Counter()
 
-        with Pool(processes=self.num_workers) as pool:
-            print(f"[Main] Starting pool with {self.num_workers} workers...")
+        # Process chunks in batches to control memory usage
+        # With 100GB memory, we can safely handle 8 concurrent workers
+        # Each worker result takes ~1-2GB, total_freq can grow to ~20-30GB
+        batch_size = min(16, self.num_workers)
+        print(f"[Main] Processing {batch_size} chunks concurrently to manage memory (available: ~100GB)")
+        sys.stdout.flush()
+
+        with Pool(processes=batch_size) as pool:
+            print(f"[Main] Starting pool with {batch_size} workers...")
             sys.stdout.flush()
-            
-            # Use imap_unordered for streaming results with chunksize=1 to limit concurrent tasks
-            for idx, freq in enumerate(pool.imap_unordered(self._worker, chunks, chunksize=1), 1):
-                print(f"[Main] Received result {idx}/{len(chunks)}: {len(freq):,} unique tokens")
+
+            # Process chunks in batches
+            for batch_start in range(0, len(chunks), batch_size):
+                batch_end = min(batch_start + batch_size, len(chunks))
+                batch_chunks = chunks[batch_start:batch_end]
+                batch_num = batch_start // batch_size + 1
+                total_batches = (len(chunks) + batch_size - 1) // batch_size
+
+                print(f"[Main] Processing batch {batch_num}/{total_batches}: chunks {batch_start+1}-{batch_end}/{len(chunks)}")
                 sys.stdout.flush()
-                
-                # Incremental merge to avoid memory spike
-                print(f"[Main]   Merging into totals (before: {len(total_freq):,} unique tokens)...")
+
+                # Process this batch
+                for idx, freq in enumerate(pool.imap_unordered(self._worker, batch_chunks), 1):
+                    global_idx = batch_start + idx
+                    print(f"[Main] Received result {global_idx}/{len(chunks)}: {len(freq):,} unique tokens")
+                    sys.stdout.flush()
+
+                    # Incremental merge to avoid memory spike
+                    print(f"[Main]   Merging into totals (before: {len(total_freq):,} unique tokens)...")
+                    sys.stdout.flush()
+
+                    total_freq.update(freq)
+
+                    print(f"[Main]   Merged (after: {len(total_freq):,} unique tokens)")
+                    sys.stdout.flush()
+
+                    # Force garbage collection after each merge to free memory
+                    del freq
+                    gc.collect()
+
+                print(f"[Main] Batch {batch_num}/{total_batches} completed")
                 sys.stdout.flush()
-                
-                total_freq.update(freq)
-                
-                print(f"[Main]   Merged (after: {len(total_freq):,} unique tokens)")
-                sys.stdout.flush()
-                
-                # Force garbage collection after each merge to free memory
-                del freq
-                gc.collect()
-            
+
             print(f"[Main] All workers completed!")
             sys.stdout.flush()
 
         print(f"[Main] Final totals: {len(total_freq):,} unique tokens, {sum(total_freq.values()):,} total occurrences")
         sys.stdout.flush()
-        
+
         # Clean up and return as dict
         result = dict(total_freq)
         del total_freq
         gc.collect()
-        
+
         print(f"[Main] Memory cleanup complete")
         sys.stdout.flush()
 
@@ -258,40 +219,26 @@ class BPETokenizerTrainer:
 
     def train(self, input_path: str) -> Tuple[Dict[int, bytes], List[Tuple[bytes, bytes]]]:
         self.input_path = input_path
-        
+
         # Initialize vocab
         self._init_vocab()
         print(f"[Train] Initialized vocab with {len(self.vocab)} tokens (256 bytes + {len(self.special_tokens)} special tokens)")
         sys.stdout.flush()
 
-        # Generate cache key
-        cache_key = self._get_cache_key(input_path) if self.cache_dir else None
-        
-        # Try to load from cache
-        pre_token_freq = None
-        if cache_key:
-            pre_token_freq = self._load_pretokenization_cache(cache_key)
-        
-        # If no cache, perform pre-tokenization
-        if pre_token_freq is None:
-            # Find chunk boundaries
-            print(f"[Train] Finding chunk boundaries...")
-            sys.stdout.flush()
-            with open(input_path, 'rb') as f:
-                boundaries = self._find_chunk_boundaries(f)
-            print(f"[Train] Found {len(boundaries)} boundaries, creating {len(boundaries)-1} chunks")
-            sys.stdout.flush()
+        # Find chunk boundaries
+        print(f"[Train] Finding chunk boundaries...")
+        sys.stdout.flush()
+        with open(input_path, 'rb') as f:
+            boundaries = self._find_chunk_boundaries(f)
+        print(f"[Train] Found {len(boundaries)} boundaries, creating {len(boundaries)-1} chunks")
+        sys.stdout.flush()
 
-            # Pre-tokenize in parallel
-            print(f"[Train] Starting parallel pre-tokenization with {self.num_workers} workers...")
-            sys.stdout.flush()
-            pre_token_freq = self._pre_tokenize_parallel(boundaries)
-            print(f"[Train] Pre-tokenization complete: {len(pre_token_freq)} unique tokens, {sum(pre_token_freq.values()):,} total tokens")
-            sys.stdout.flush()
-            
-            # Save to cache
-            if cache_key:
-                self._save_pretokenization_cache(pre_token_freq, cache_key)
+        # Pre-tokenize in parallel
+        print(f"[Train] Starting parallel pre-tokenization with {self.num_workers} workers...")
+        sys.stdout.flush()
+        pre_token_freq = self._pre_tokenize_parallel(boundaries)
+        print(f"[Train] Pre-tokenization complete: {len(pre_token_freq)} unique tokens, {sum(pre_token_freq.values()):,} total tokens")
+        sys.stdout.flush()
 
         # Force garbage collection after pre-tokenization
         gc.collect()
@@ -439,8 +386,7 @@ def bpe_train(
     input_path: str,
     vocab_size: int,
     special_tokens: List[str],
-    num_workers: int = None,
-    cache_dir: str = None
+    num_workers: int = None
 ) -> Tuple[Dict[int, bytes], List[Tuple[bytes, bytes]]]:
     """
     Train a byte-level BPE tokenizer on the provided text corpus.
@@ -461,8 +407,6 @@ def bpe_train(
             do not participate in the BPE merging process.
         num_workers: Number of worker processes for parallel processing.
             If None, auto-detects based on available CPUs (capped at 32).
-        cache_dir: Directory to store pre-tokenization cache.
-            If None, no caching is used.
 
     Returns:
         A tuple containing:
@@ -478,8 +422,7 @@ def bpe_train(
         >>> vocab, merges = bpe_train(
         ...     input_path="data/train.txt",
         ...     vocab_size=10000,
-        ...     special_tokens=["<|endoftext|>"],
-        ...     cache_dir="./bpe_cache"
+        ...     special_tokens=["<|endoftext|>"]
         ... )
         >>> print(f"Vocabulary size: {len(vocab)}")
         >>> print(f"Number of merges: {len(merges)}")
@@ -488,12 +431,10 @@ def bpe_train(
         - The function uses the GPT-2 regex pattern for pre-tokenization
         - Merges do not cross pre-token boundaries or special token boundaries
         - Ties in merge frequency are broken lexicographically (higher pair wins)
-        - Pre-tokenization results are cached if cache_dir is provided
     """
     trainer = BPETokenizerTrainer(
-        vocab_size, 
-        special_tokens, 
-        num_workers=num_workers,
-        cache_dir=cache_dir
+        vocab_size,
+        special_tokens,
+        num_workers=num_workers
     )
     return trainer.train(input_path)

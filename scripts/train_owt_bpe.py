@@ -10,6 +10,7 @@ import sys
 import os
 import time
 import json
+import base64
 import psutil
 from pathlib import Path
 
@@ -26,16 +27,12 @@ def get_memory_usage_gb():
 
 
 def save_vocab(vocab, output_path):
-    """Save vocabulary to JSON file in GPT-2 style (UTF-8 strings as keys)."""
-    # Convert to GPT-2 style: token_string -> token_id
+    """Save vocabulary to JSON file using Base64 encoding for bytes."""
+    # Convert bytes to base64 strings: token_base64_string -> token_id
     vocab_serializable = {}
     for token_id, token_bytes in vocab.items():
-        try:
-            # Decode to UTF-8 string
-            token_str = token_bytes.decode('utf-8')
-        except UnicodeDecodeError:
-            # For non-UTF-8 bytes, use escaped representation
-            token_str = token_bytes.decode('utf-8', errors='replace')
+        # Encode bytes as base64 string (preserves all bytes 0-255)
+        token_str = base64.b64encode(token_bytes).decode('ascii')
         vocab_serializable[token_str] = token_id
 
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -44,17 +41,12 @@ def save_vocab(vocab, output_path):
 
 
 def save_merges(merges, output_path):
-    """Save merges to text file in GPT-2 style (UTF-8 strings)."""
+    """Save merges to text file using Base64 encoding for bytes."""
     with open(output_path, 'w', encoding='utf-8') as f:
         for token1, token2 in merges:
-            try:
-                # Decode to UTF-8 strings
-                token1_str = token1.decode('utf-8')
-                token2_str = token2.decode('utf-8')
-            except UnicodeDecodeError:
-                # For non-UTF-8 bytes, use escaped representation
-                token1_str = token1.decode('utf-8', errors='replace')
-                token2_str = token2.decode('utf-8', errors='replace')
+            # Encode bytes as base64 strings
+            token1_str = base64.b64encode(token1).decode('ascii')
+            token2_str = base64.b64encode(token2).decode('ascii')
             f.write(f"{token1_str} {token2_str}\n")
     print(f"Merges saved to {output_path}")
 
@@ -95,8 +87,7 @@ def main():
     trainer = BPETokenizerTrainer(
         vocab_size=vocab_size,
         special_tokens=special_tokens,
-        num_workers=None,
-        cache_dir="./bpe_cache"
+        num_workers=None
     )
     vocab, merges = trainer.train(input_path)
 
