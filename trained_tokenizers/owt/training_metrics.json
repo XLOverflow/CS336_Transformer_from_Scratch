@@ -5,11 +5,11 @@
   "special_tokens": [
     "<|endoftext|>"
   ],
-  "training_time_seconds": 10615.414105176926,
-  "training_time_minutes": 176.92356841961544,
-  "training_time_hours": 2.9487261403269236,
-  "peak_memory_gb": 6.694530487060547,
-  "memory_used_gb": 6.676307678222656,
+  "training_time_seconds": 9928.781230449677,
+  "training_time_minutes": 165.47968717416128,
+  "training_time_hours": 2.7579947862360212,
+  "peak_memory_gb": 8.783939361572266,
+  "memory_used_gb": 8.76571273803711,
   "final_vocab_size": 32000,
   "num_merges": 31743,
   "longest_token_id": 25824,
