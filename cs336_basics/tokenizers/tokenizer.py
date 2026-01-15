@@ -2,9 +2,17 @@ from typing import List, Tuple, Dict, Iterable, Iterator
 import json
 import base64
 import regex as re
+from multiprocessing import Pool, cpu_count
+from functools import partial
 
 # GPT-2 regex pattern for pre-tokenization
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+
+# Helper function for parallel encoding (must be at module level for pickling)
+def _encode_chunk_with_index(args):
+    """Helper function for parallel encoding. Must be at module level for multiprocessing."""
+    idx, chunk, tokenizer = args
+    return idx, tokenizer.encode(chunk)
 
 class BPETokenizer:
     def __init__(self, vocab: Dict[int, bytes], merges: List[Tuple[bytes, bytes]], special_tokens: List[str]=None):
@@ -27,6 +35,16 @@ class BPETokenizer:
         # Build merge ranks for efficient BPE application
         # Lower rank = higher priority (earlier in merge list)
         self.merge_ranks = {pair: i for i, pair in enumerate(self.merges)}
+        
+        # Pre-compile regex patterns for performance
+        self.pat_compiled = re.compile(PAT)
+        
+        if self.special_tokens:
+            sorted_special_tokens = sorted(self.special_tokens, key=len, reverse=True)
+            special_pattern = '|'.join(re.escape(token) for token in sorted_special_tokens)
+            self.special_pattern_compiled = re.compile(f'({special_pattern})')
+        else:
+            self.special_pattern_compiled = None
 
     @staticmethod
     def _load_vocab(vocab_filepath: str) -> Dict[int, bytes]:
@@ -83,17 +101,10 @@ class BPETokenizer:
         Returns a list of tuples (segment, is_special_token)
         where is_special_token is True if the segment is a special token.
         """
-        if self.special_tokens is None or len(self.special_tokens) == 0:
+        if not self.special_pattern_compiled:
             return [(text, False)]
 
-        # Sort special tokens by length (longest first) to prioritize longer matches
-        # This handles overlapping special tokens correctly
-        sorted_special_tokens = sorted(self.special_tokens, key=len, reverse=True)
-
-        # Create a regex pattern to match special tokens
-        special_pattern = '|'.join(re.escape(token) for token in sorted_special_tokens)
-
-        spilt_text = re.split(f'({special_pattern})', text)
+        spilt_text = self.special_pattern_compiled.split(text)
 
         result = []
         for part in spilt_text:
@@ -181,7 +192,7 @@ class BPETokenizer:
                     raise ValueError(f"Special token '{part}' not found in vocabulary")
             else:
                 # for regular text, we need to pre_tokenization and apply BPE, then converting to IDs
-                matchs = re.findall(PAT, part)
+                matchs = self.pat_compiled.findall(part)
 
                 for match in matchs:
                     matchs_bytes = match.encode('utf-8')
@@ -196,6 +207,60 @@ class BPETokenizer:
         
         return ids
 
+    def encode_parallel(self, text: str, num_processes: int = None, 
+                       split_token: str = "<|endoftext|>") -> List[int]:
+        """
+        Encode text in parallel by splitting on special tokens.
+        
+        Args:
+            text: Input text to encode
+            num_processes: Number of processes to use (default: cpu_count())
+            split_token: Special token to split on for parallelization
+            
+        Returns:
+            List of token IDs
+        """
+        from tqdm import tqdm
+        
+        if num_processes is None:
+            num_processes = cpu_count()
+        
+        # Split text by the special token
+        if split_token in text:
+            chunks = text.split(split_token)
+            chunks_with_token = []
+            for i, chunk in enumerate(chunks):
+                if i < len(chunks) - 1:
+                    chunks_with_token.append((i, chunk + split_token, self))
+                else:
+                    if chunk:
+                        chunks_with_token.append((i, chunk, self))
+        else:
+            return self.encode(text)
+        
+        chunks_with_token = [c for c in chunks_with_token if c]
+        
+        if not chunks_with_token:
+            return []
+        
+        print(f"Splitting into {len(chunks_with_token):,} chunks for parallel encoding with {num_processes} processes...")
+        
+        # Use imap_unordered for better performance with larger chunksize
+        with Pool(processes=num_processes) as pool:
+            results = {}
+            
+            with tqdm(total=len(chunks_with_token), desc="Encoding", unit="chunk") as pbar:
+                for idx, chunk_ids in pool.imap_unordered(_encode_chunk_with_index, chunks_with_token, chunksize=100):
+                    results[idx] = chunk_ids
+                    pbar.update(1)
+        
+        # Sort by index and concatenate
+        all_ids = []
+        for i in sorted(results.keys()):
+            all_ids.extend(results[i])
+        
+        return all_ids
+    
     def encode_iterable(self, iterable: Iterable[str]) -> Iterator[int]:
         """
         Encode an iterable of text chunks, yielding token IDs.
@@ -248,6 +313,3 @@ class BPETokenizer:
         # Use 'replace' error handling to avoid crashes on invalid UTF-8
         # (though with proper BPE, this shouldn't happen)
         return byte_sequence.decode('utf-8', errors='replace')
-
-
-    

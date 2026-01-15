@@ -1,6 +1,7 @@
 from . import bpe
+from . import tokenizer
 
 __all__ = [
     'bpe',
-    'cs336_basics.tokenizers.'
+    'tokenizer',
 ]
