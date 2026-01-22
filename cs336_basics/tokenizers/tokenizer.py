@@ -1,18 +1,38 @@
 from typing import List, Tuple, Dict, Iterable, Iterator
 import json
 import base64
+import os
 import regex as re
 from multiprocessing import Pool, cpu_count
-from functools import partial
 
 # GPT-2 regex pattern for pre-tokenization
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 
-# Helper function for parallel encoding (must be at module level for pickling)
-def _encode_chunk_with_index(args):
-    """Helper function for parallel encoding. Must be at module level for multiprocessing."""
-    idx, chunk, tokenizer = args
-    return idx, tokenizer.encode(chunk)
+# Global tokenizer and chunks for worker processes (initialized once per worker)
+_worker_tokenizer = None
+_worker_chunks = None
+
+def _init_worker(vocab, merges, special_tokens, chunks):
+    """Initialize tokenizer and chunks in worker process."""
+    global _worker_tokenizer, _worker_chunks
+    _worker_tokenizer = BPETokenizer(vocab, merges, special_tokens)
+    _worker_chunks = chunks
+
+def _encode_batch_and_save(args):
+    """Encode a batch of chunks and save to tmp file."""
+    batch_id, start_idx, end_idx, tmp_dir = args
+    import numpy as np
+
+    results = []
+    for i in range(start_idx, end_idx):
+        idx, chunk = _worker_chunks[i]
+        ids = _worker_tokenizer.encode(chunk)
+        results.append((idx, ids))
+
+    # Save to tmp file
+    np.save(os.path.join(tmp_dir, f"batch_{batch_id}.npy"),
+            np.array(results, dtype=object), allow_pickle=True)
+    return batch_id
 
 class BPETokenizer:
     def __init__(self, vocab: Dict[int, bytes], merges: List[Tuple[bytes, bytes]], special_tokens: List[str]=None):
@@ -207,59 +227,122 @@ class BPETokenizer:
         
         return ids
 
-    def encode_parallel(self, text: str, num_processes: int = None, 
-                       split_token: str = "<|endoftext|>") -> List[int]:
+    def encode_parallel(self, text: str, num_processes: int = None,
+                       split_token: str = "<|endoftext|>",
+                       batch_size: int = 100000,
+                       output_file: str = None) -> List[int]:
         """
         Encode text in parallel by splitting on special tokens.
-        
+
+        Uses batch + checkpoint approach: each process handles a batch of chunks,
+        saves result to tmp file, then moves to next batch. Supports resume.
+
         Args:
             text: Input text to encode
             num_processes: Number of processes to use (default: cpu_count())
             split_token: Special token to split on for parallelization
-            
+            batch_size: Number of chunks per batch (default: 100000)
+            output_file: Output file path for encoded data
+
         Returns:
-            List of token IDs
+            memmap array of token IDs
         """
         from tqdm import tqdm
-        
+        import numpy as np
+
         if num_processes is None:
             num_processes = cpu_count()
-        
+
+        if output_file is None:
+            output_file = "./encoded.npy"
+
+        # Use output file name (without extension) as tmp directory
+        base_name = os.path.splitext(output_file)[0]
+        tmp_dir = base_name + "_tmp"
+        os.makedirs(tmp_dir, exist_ok=True)
+
         # Split text by the special token
-        if split_token in text:
-            chunks = text.split(split_token)
-            chunks_with_token = []
-            for i, chunk in enumerate(chunks):
-                if i < len(chunks) - 1:
-                    chunks_with_token.append((i, chunk + split_token, self))
-                else:
-                    if chunk:
-                        chunks_with_token.append((i, chunk, self))
-        else:
+        if split_token not in text:
             return self.encode(text)
-        
-        chunks_with_token = [c for c in chunks_with_token if c]
-        
-        if not chunks_with_token:
+
+        chunks = text.split(split_token)
+        chunks_with_idx = []
+        for i, chunk in enumerate(chunks):
+            if i < len(chunks) - 1:
+                chunks_with_idx.append((i, chunk + split_token))
+            elif chunk:  # Last chunk only if non-empty
+                chunks_with_idx.append((i, chunk))
+
+        if not chunks_with_idx:
             return []
-        
-        print(f"Splitting into {len(chunks_with_token):,} chunks for parallel encoding with {num_processes} processes...")
-        
-        # Use imap_unordered for better performance with larger chunksize
-        with Pool(processes=num_processes) as pool:
-            results = {}
-            
-            with tqdm(total=len(chunks_with_token), desc="Encoding", unit="chunk") as pbar:
-                for idx, chunk_ids in pool.imap_unordered(_encode_chunk_with_index, chunks_with_token, chunksize=100):
-                    results[idx] = chunk_ids
-                    pbar.update(1)
-        
-        # Sort by index and concatenate
-        all_ids = []
-        for i in sorted(results.keys()):
-            all_ids.extend(results[i])
-        
-        return all_ids
+
+        num_chunks = len(chunks_with_idx)
+        num_batches = (num_chunks + batch_size - 1) // batch_size
+
+        print(f"Total: {num_chunks:,} chunks, {num_batches} batches (batch_size={batch_size})")
+
+        # Check which batches are already done
+        completed = set()
+        for batch_id in range(num_batches):
+            if os.path.exists(os.path.join(tmp_dir, f"batch_{batch_id}.npy")):
+                completed.add(batch_id)
+
+        # Build pending batches (only pass indices, not data)
+        pending_batches = []
+        for batch_id in range(num_batches):
+            if batch_id not in completed:
+                start = batch_id * batch_size
+                end = min(start + batch_size, num_chunks)
+                pending_batches.append((batch_id, start, end, tmp_dir))
+
+        print(f"Completed: {len(completed)}, Pending: {len(pending_batches)}")
+
+        # Process pending batches
+        if pending_batches:
+            with Pool(processes=num_processes,
+                      initializer=_init_worker,
+                      initargs=(self.vocab, self.merges, self.special_tokens, chunks_with_idx)) as pool:
+                with tqdm(total=len(pending_batches), desc="Encoding batches") as pbar:
+                    for batch_id in pool.imap_unordered(_encode_batch_and_save, pending_batches):
+                        pbar.update(1)
+
+        # Merge results and save to final file (stream to avoid OOM)
+        if not os.path.exists(output_file):
+            print("Merging results to final file...")
+
+            # First pass: count total tokens per batch
+            batch_tokens = []
+            for batch_id in tqdm(range(num_batches), desc="Counting"):
+                batch_file = os.path.join(tmp_dir, f"batch_{batch_id}.npy")
+                batch_data = np.load(batch_file, allow_pickle=True)
+                count = sum(len(ids) for idx, ids in batch_data)
+                batch_tokens.append(count)
+
+            total_tokens = sum(batch_tokens)
+            print(f"Total tokens: {total_tokens:,}")
+
+            # Create memmap file
+            final_arr = np.memmap(output_file, dtype=np.uint16, mode='w+', shape=(total_tokens,))
+
+            # Second pass: write batches in order (batch内按idx排序)
+            print("Writing to final file...")
+            offset = 0
+            for batch_id in tqdm(range(num_batches), desc="Writing"):
+                batch_file = os.path.join(tmp_dir, f"batch_{batch_id}.npy")
+                batch_data = np.load(batch_file, allow_pickle=True)
+                # Sort by idx within batch to ensure correct order
+                batch_sorted = sorted(batch_data, key=lambda x: x[0])
+                for idx, ids in batch_sorted:
+                    final_arr[offset:offset + len(ids)] = ids
+                    offset += len(ids)
+
+            final_arr.flush()
+            del final_arr
+            print(f"Saved to {output_file}")
+
+        # Return memmap array (doesn't load into memory)
+        print(f"Loading from {output_file}...")
+        return np.memmap(output_file, dtype=np.uint16, mode='r')
     
     def encode_iterable(self, iterable: Iterable[str]) -> Iterator[int]:
         """
