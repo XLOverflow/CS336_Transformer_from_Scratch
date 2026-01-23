@@ -8,6 +8,7 @@ Following modern LLM practices (PaLM, LLaMA), we omit the bias term.
 import torch
 import torch.nn as nn
 from typing import Optional
+from einops import einsum
 
 
 class Linear(nn.Module):
@@ -41,11 +42,13 @@ class Linear(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
 
-        # TODO: Initialize weight matrix W of shape (out_features, in_features)
-        # Use truncated normal initialization: N(0, 2/(in_features + out_features))
-        # Hint: Use nn.Parameter and torch.nn.init.trunc_normal_
-        # Remember to store as row-major W, not W^T
-        raise NotImplementedError("Initialize weight parameter here")
+        # Initialize weight matrix W of shape (out_features, in_features)
+        # Store as W (not W^T) for memory ordering reasons
+        self.weight = nn.Parameter(torch.empty(out_features, in_features, device=device, dtype=dtype))
+
+        # Truncated normal initialization: N(0, σ²=2/(in+out)), truncated at [-3σ, 3σ]
+        std = (2 / (in_features + out_features)) ** 0.5
+        nn.init.trunc_normal_(self.weight, mean=0.0, std=std, a=-3*std, b=3*std)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -57,7 +60,7 @@ class Linear(nn.Module):
         Returns:
             Output tensor of shape (*, out_features)
         """
-        # TODO: Implement forward pass
-        # Compute y = xW^T (because we store W in row-major order)
-        # Hint: Use einsum or @ operator for batched matrix multiplication
-        raise NotImplementedError("Implement forward pass: y = xW^T")
+        # Compute y = xW^T using einsum
+        # x: (..., in_features), weight: (out_features, in_features)
+        # output: (..., out_features)
+        return einsum(x, self.weight, "... i, o i -> ... o")
