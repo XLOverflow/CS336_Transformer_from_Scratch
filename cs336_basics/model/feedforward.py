@@ -51,7 +51,9 @@ class SwiGLU(nn.Module):
         # - W2: d_ff -> d_model (output projection)
         # - W3: d_model -> d_ff (for gating branch)
         # Hint: Use Linear class
-        raise NotImplementedError("Initialize W1, W2, W3 linear layers")
+        self.W1 = Linear(d_model, d_ff, device=device, dtype=dtype)
+        self.W2 = Linear(d_ff, d_model, device=device, dtype=dtype)
+        self.W3 = Linear(d_model, d_ff, device=device, dtype=dtype)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -68,7 +70,11 @@ class SwiGLU(nn.Module):
         # 1. Compute gate = SiLU(W1(x))
         #    SiLU(z) = z * sigmoid(z) = z / (1 + exp(-z))
         #    Hint: Use torch.sigmoid
+        gate_linear = self.W1(x)
+        gate = gate_linear * torch.sigmoid(gate_linear)
         # 2. Compute value = W3(x)
+        value = self.W3(x)
         # 3. Element-wise multiply: gate ⊙ value
+        gated_value = gate * value
         # 4. Project back: W2(gate ⊙ value)
-        raise NotImplementedError("Implement SwiGLU forward pass")
+        return self.W2(gated_value)

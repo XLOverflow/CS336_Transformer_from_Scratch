@@ -48,12 +48,16 @@ class RotaryPositionalEmbedding(nn.Module):
 
         # TODO: Precompute sin and cos values for efficiency
         # 1. Compute angles: theta_k = theta^(-2k/d_k) for k=0..d_k/2-1
+        theta_k = self.theta ** (-2 * torch.arange(self.d_k // 2, device=device) / self.d_k)
         # 2. Compute positions: 0 to max_seq_len-1
+        positions = torch.arange(self.max_seq_len, device=device).unsqueeze(1)
         # 3. Compute rotation angles: position * theta_k (outer product)
+        angles = positions * theta_k.unsqueeze(0)
         # 4. Compute and register sin/cos buffers
         # Hint: Use self.register_buffer with persistent=False
         # Shape of buffers: (max_seq_len, d_k//2)
-        raise NotImplementedError("Precompute and register sin/cos buffers")
+        self.register_buffer("sin", torch.sin(angles), persistent=False)
+        self.register_buffer("cos", torch.cos(angles), persistent=False)
 
     def forward(
         self, x: torch.Tensor, token_positions: torch.Tensor
@@ -71,10 +75,16 @@ class RotaryPositionalEmbedding(nn.Module):
         # TODO: Apply RoPE rotation
         # Steps:
         # 1. Slice precomputed sin/cos using token_positions
+        sin = self.sin[token_positions]
+        cos = self.cos[token_positions]
         # 2. Reshape x into pairs: (x[0], x[1]), (x[2], x[3]), ...
+        x1 = x[..., ::2]
+        x2 = x[..., 1::2]
         # 3. Apply rotation matrix to each pair:
         #    [x_even']   [cos  -sin] [x_even]
         #    [x_odd' ] = [sin   cos] [x_odd ]
+        x_rotated_1 = x1 * cos - x2 * sin
+        x_rotated_2 = x1 * sin + x2 * cos
         # 4. Concatenate rotated pairs back
         # Hint: Split x along last dim, apply rotation, stack/concatenate
-        raise NotImplementedError("Implement RoPE rotation")
+        return torch.stack((x_rotated_1, x_rotated_2), dim=-1).flatten(-2)
