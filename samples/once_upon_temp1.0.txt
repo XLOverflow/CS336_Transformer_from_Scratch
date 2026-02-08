@@ -1,0 +1,30 @@
+Loaded checkpoint from checkpoints/lr_1e-2/final.pt
+Loaded tokenizer from trained_tokenizers/tinystories
+============================================================
+Prompt: Once upon a time
+Temperature: 1.0, Top-p: 0.9
+============================================================
+
+--- Sample 1 ---
+Once upon a time, there was a fat cat named Tom. Tom loved to play with his toy mouse. One day, Tom went outside to play with his toy mouse. He picked up the toy mouse with his mouth and ran around.
+As Tom played, he saw a big tree. He thought, "Maybe my toy mouse can help me get my toy mouse from the tree!" Tom tried to climb the tree, but it was too hard. Tom did not give up. He tried again and again.
+Finally, Tom reached the tree. He was so happy that he found his toy mouse. Tom pulled the toy mouse up the tree and shared it with his friends. They all played together and had lots of fun. The fat cat and his friends loved the tree and his toy mouse.
+<|endoftext|>
+
+
+Lily was a little girl who liked to play in the park. She liked to swing, slide and run. She liked to look for bugs and flowers and birds. One day, she saw a
+
+--- Sample 2 ---
+Once upon a time, in a small forest, there was a cute little bunny named Bobo. Bobo loved to hop and play with his friends. One day, he heard a sound from a big tree. Bobo went to see what was making the sound.
+As Bobo got closer, he saw a squirrel playing with a red ball. The squirrel wanted to play too. Bobo and the squirrel took turns jumping on the ball and throwing it to each other. They laughed and played together.
+As the sun went down, Bobo and the squirrel said goodbye. They both went to their homes in the small forest. Bobo went to sleep with a big smile on his face, excited to play with his new friend again the next day.
+<|endoftext|>
+One day, a boy named Tom went to the park. He saw a big tree with a symbol on it. The symbol was a red heart. Tom liked the heart and wanted to play with it. He thought it would be fun to throw the heart and watch it fly
+
+--- Sample 3 ---
+Once upon a time, there was a shy cat named Tom. Tom liked to dress up in funny clothes. One day, Tom found a sock on the floor. He picked it up and put it on his paw. Tom felt very happy.
+Tom wanted to show his friends the sock. He went outside and saw his friends. "Look what I found!" Tom said to his friend, the dog. "Look at my sock!" he said. His friends liked the sock too.
+Tom wanted to show his friends the sock. But, he was shy. Tom held the sock tight in his paw. Then, a bird flew by and dropped the sock right in front of Tom. His friends looked at the sock and smiled. "Wow, Tom! Your sock is nice!" Tom felt happy and proud. The sock was a part of the fun, and Tom learned that sharing his socks made him feel good inside.
+<|endoftext|>
+One day, a little girl named Lily went to the store with her mom
+============================================================

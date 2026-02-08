@@ -1,0 +1,186 @@
+_wandb:
+    value:
+        cli_version: 0.21.2
+        e:
+            upjr806j1nzqazstbgotjozd0qjyf8mb:
+                args:
+                    - --config
+                    - tinystories
+                    - --train_data
+                    - data/tinystories_train_encoded.npy
+                    - --val_data
+                    - data/tinystories_valid_encoded.npy
+                    - --batch_size
+                    - "256"
+                    - --max_steps
+                    - "5000"
+                    - --lr
+                    - "1e-3"
+                    - --min_lr
+                    - "1e-4"
+                    - --warmup_steps
+                    - "125"
+                    - --max_grad_norm
+                    - "1.0"
+                    - --log_interval
+                    - "50"
+                    - --eval_interval
+                    - "250"
+                    - --checkpoint_dir
+                    - checkpoints/tinystories
+                    - --checkpoint_interval
+                    - "1000"
+                    - --wandb
+                codePath: scripts/train_lm.py
+                codePathLocal: scripts/train_lm.py
+                cpu_count: 104
+                cpu_count_logical: 104
+                cudaVersion: "12.6"
+                disk:
+                    /:
+                        total: "315396816896"
+                        used: "49363853312"
+                email: xli8@andrew.cmu.edu
+                executable: /ocean/projects/cis250265p/xli45/assignment1-basics/.venv/bin/python
+                git:
+                    commit: f7c4cf730f2c9000dcb81d98069eeac2be97d472
+                    remote: https://github.com/XLOverflow/assignment1-basics.git
+                gpu: NVIDIA H100 80GB HBM3
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Hopper
+                      cudaCores: 16896
+                      memoryTotal: "85520809984"
+                      name: NVIDIA H100 80GB HBM3
+                      uuid: GPU-92fc3cb6-4e35-fd71-179b-e1b911bfb70a
+                host: w007.ib.bridges2.psc.edu
+                memory:
+                    total: "2164156493824"
+                os: Linux-4.18.0-553.36.1.el8_10.x86_64-x86_64-with-glibc2.28
+                program: /ocean/projects/cis250265p/xli45/assignment1-basics/scripts/train_lm.py
+                python: CPython 3.12.7
+                root: /ocean/projects/cis250265p/xli45/assignment1-basics
+                slurm:
+                    cluster_name: bridges2
+                    conf: /var/spool/slurm/d/conf-cache/slurm.conf
+                    cpus_on_node: "12"
+                    export_env: ALL
+                    gpus_on_node: "1"
+                    gtids: "0"
+                    job_account: cis260009p
+                    job_cpus_per_node: "12"
+                    job_cpus_per_node_pack_group_0: "12"
+                    job_gid: "26783"
+                    job_gpus: "0"
+                    job_id: "37410613"
+                    job_name: Interact
+                    job_nodelist: w007
+                    job_num_nodes: "1"
+                    job_partition: GPU-shared
+                    job_qos: gpuinteract
+                    job_uid: "99304"
+                    job_user: xli45
+                    jobid: "37410613"
+                    launch_node_ipaddr: 10.8.11.29
+                    localid: "0"
+                    mpi_type: none
+                    nnodes: "1"
+                    node_aliases: (null)
+                    nodeid: "0"
+                    nodelist: w007
+                    prio_process: "0"
+                    procid: "0"
+                    pty_port: "41459"
+                    pty_win_col: "194"
+                    pty_win_row: "28"
+                    script_context: prolog_task
+                    srun_comm_host: 10.8.11.29
+                    srun_comm_port: "32787"
+                    step_id: "4294967290"
+                    step_launcher_port: "32787"
+                    step_nodelist: w007
+                    step_num_nodes: "1"
+                    step_num_tasks: "1"
+                    step_tasks_per_node: "1"
+                    stepid: "4294967290"
+                    submit_dir: /ocean/projects/cis250265p/xli45/assignment1-basics
+                    submit_host: br011.ib.bridges2.psc.edu
+                    task_pid: "65904"
+                    tasks_per_node: "12"
+                    topology_addr: w007
+                    topology_addr_pattern: node
+                    working_cluster: bridges2:br003:6810:9728:109
+                startedAt: "2026-02-08T07:57:49.377211Z"
+                writerId: upjr806j1nzqazstbgotjozd0qjyf8mb
+        m: []
+        python_version: 3.12.7
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+            "3":
+                - 2
+                - 16
+            "4": 3.12.7
+            "5": 0.21.2
+            "8":
+                - 2
+            "12": 0.21.2
+            "13": linux-x86_64
+batch_size:
+    value: 256
+beta1:
+    value: 0.9
+beta2:
+    value: 0.999
+checkpoint_dir:
+    value: checkpoints/tinystories
+checkpoint_interval:
+    value: 1000
+config:
+    value: tinystories
+context_length:
+    value: null
+d_ff:
+    value: null
+d_model:
+    value: null
+device:
+    value: cuda
+eps:
+    value: 1e-08
+eval_batches:
+    value: 20
+eval_interval:
+    value: 250
+log_interval:
+    value: 50
+lr:
+    value: 0.001
+max_grad_norm:
+    value: 1
+max_steps:
+    value: 5000
+min_lr:
+    value: 0.0001
+num_heads:
+    value: null
+num_layers:
+    value: null
+resume:
+    value: null
+rope_theta:
+    value: null
+train_data:
+    value: data/tinystories_train_encoded.npy
+val_data:
+    value: data/tinystories_valid_encoded.npy
+vocab_size:
+    value: null
+wandb:
+    value: true
+warmup_steps:
+    value: 125
+weight_decay:
+    value: 0.1

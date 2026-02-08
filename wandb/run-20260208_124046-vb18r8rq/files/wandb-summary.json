@@ -1,0 +1,1 @@
+{"train/perplexity":6.0561253434356965,"_timestamp":1.770574465596481e+09,"val/step":1000,"val/loss":1.8320507287979126,"_wandb":{"runtime":2055},"train/lr":0.00046119494403600123,"val/perplexity":6.246683786653021,"train/step":1050,"train/wallclock":1982.8211388587952,"_runtime":2055,"_step":25,"train/loss":1.801070213317871}

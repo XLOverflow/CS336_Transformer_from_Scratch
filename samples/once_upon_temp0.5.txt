@@ -1,0 +1,31 @@
+Loaded checkpoint from checkpoints/lr_1e-2/final.pt
+Loaded tokenizer from trained_tokenizers/tinystories
+============================================================
+Prompt: Once upon a time
+Temperature: 0.5, Top-p: 0.9
+============================================================
+
+--- Sample 1 ---
+Once upon a time, there was a little girl named Lily. She had a big, red ball that she loved to play with. One day, she saw a small, frightened cat in her yard. The cat was scared and alone.
+Lily wanted to help the cat. She picked up the cat and held it close to her. She said, "Don't be scared, little cat. I will take care of you." The cat looked at Lily and started to feel safe.
+Lily and the cat played with the red ball. They had so much fun! The cat was not frightened anymore. Lily and the cat became best friends. They played together every day, and the cat was not frightened anymore.
+<|endoftext|>
+
+Once upon a time there was a little girl named Jane. Jane was three years old and loved to play outside. One day, she saw a big box in her room. She was very curious and wanted to know what was inside.
+Jane opened the box and saw a lot
+
+--- Sample 2 ---
+Once upon a time, there was a little boy named Tim. Tim had a big, round ball. He loved to play with his ball every day. One day, Tim saw a big, dangerous dog in his yard. The dog was barking and running towards Tim. Tim was scared and wanted to run away.
+Tim's mom saw him and said, "Tim, don't go near the dangerous dog. It can hurt you." But Tim did not listen. He wanted to play with his ball. So, he went close to the dangerous dog and said, "Hi, dog. Do you want to play with my ball?"
+The dangerous dog looked at Tim and then at the ball. The dog did not want to play with the ball. The dog barked and ran away. Tim's mom came out and said, "Good job, Tim! You are safe now." Tim was happy and played with his ball all day long.
+<|endoftext|>
+Once upon a time, there was a little girl named
+
+--- Sample 3 ---
+Once upon a time, there was a little girl named Lily. She had a pretty dress that she loved to wear. One day, she went to the park to play with her friends.
+At the park, Lily saw a big tree. She wanted to climb it. She asked her friend, Tom, "Can you help me climb the tree?" Tom said, "Yes, let's go!" They started to climb the tree together.
+As they climbed, they saw a big, scary dog. The dog barked loudly and scared them. They tried to run away, but the dog chased them. They were very scared.
+Lily and Tom tried to climb down, but the dog was too fast. They got hurt and cried. The end.
+<|endoftext|>
+Once upon a time, there was a little boy named Tim. Tim had a big, red ball. He loved to play with his ball every day. One day, Tim saw a big, green pear on the table. He wanted to eat
+============================================================

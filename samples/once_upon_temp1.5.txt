@@ -1,0 +1,25 @@
+Loaded checkpoint from checkpoints/lr_1e-2/final.pt
+Loaded tokenizer from trained_tokenizers/tinystories
+============================================================
+Prompt: Once upon a time
+Temperature: 1.5, Top-p: 0.9
+============================================================
+
+--- Sample 1 ---
+Once upon a time, in a small village, there lived a woman and her hairy dog. They both liked to play with things they lost, so no one couldn't argue about who should get them from another place. But one day, they looked and didn't find it.
+Un uniform was tried to hide outside where the orange cat liked to escape alone. Now the cat's gun looked sad and nothing would work when they ran out playing. They thought their owner would trust them. They thought sung happy games kept props bright as fading away as they could.
+Every day, they walked around the village to see what kind of dreams the colourful owl threw stopped Cater. Floof darker and asked the sky “Did raining bouncy dances with Blue myself said tomorrow?” Jared got in trouble and they didn't pretend together was borrowed family rhyweed like wine–itver for Ralph, Yawn Patvers' kitty and Jenny Jax content their footprints twice, so ready to stay eventually!
+<|endoftext|>
+
+--- Sample 2 ---
+Once upon a time, a little girl named Amy wanted to do something good for her mom. Amy found a silver cup in the garden. She thought it was the gold cup very fancy. She picked it up and wrapped it in a shiny, pretty piece of necklace.
+Amy's mom saw her play and ran away. She was sad and mad. Amy wanted the tower back. So, she just wanted to balance it. Her mom saw her getting sad and comforted her. "Please show the value of the weird meating," she said.
+So, they searched the field together. Amy even added the silver jewelry on a small piece that her mom made on icy days. Soon, they knew how to balance the big boy else. She asked her dad again, but his words worked and soon, the whole painting began to come match with the card. It felt fine in lots of colours. Amy and her mom were so happy and clapped because their scissors had taught Sally something new.
+<|endoftext|>
+Once upon
+
+--- Sample 3 ---
+Once upon a time there were two friends that liked sailing hats and hornats and George's binoculars, which Emma spotted a spear around the bushes. George was amazed by Mommy's comiring—and0 shiny horns put on signs in uniforms’s camevice immediately grabbed information.
+Soon, children packed fancy helmets as cross roared to cheer for them now. Thulling practising into outfits room He congratulated Ruby standing in front response. And instead of preparing the wedding ceremisity someday thought lingl such Bars whatever scern matched Emma’s horns and drums day!
+Emma grinned and knew that guessing her ability didn’t sooner made her Aily clearshnessic as magical escape Joshal was chose after looking concerned, when lead to how archest ahead of surprising mustaches said her pretend feat, because possibly just Playing between like Puggedvaities was anticipation this connected onto Bear cageits. And sure enough! With Kitty proudly waved her feather charm against
+============================================================

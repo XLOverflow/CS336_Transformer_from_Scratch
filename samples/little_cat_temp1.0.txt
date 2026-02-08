@@ -1,0 +1,32 @@
+Loaded checkpoint from checkpoints/lr_1e-2/final.pt
+Loaded tokenizer from trained_tokenizers/tinystories
+============================================================
+Prompt: The little cat
+Temperature: 1.0, Top-p: 0.9
+============================================================
+
+--- Sample 1 ---
+The little cat said, "I'm sorry, I thought it was my toy. It has it like all my friends." The dog said, "I'm sorry, but your toy does not look nice." The little cat was sad. She did not want to be like the big dog.
+Then, the little cat saw a toy on the ground. It was a ball! She picked it up with her mouth and brought it to the little dog. The big dog saw the ball and said, "Thank you, little cat. I found a ball too." The little cat was happy, and they played with the ball together. The big dog learned that it is not nice to take things from others.
+<|endoftext|>
+One day, a big bird named Bob went to the sky. He saw a jet. The jet was big and tall. Bob thought it was incredible. He wanted to fly on the jet.
+Bob met a small bug named Tim. Tim was very small. Bob said, "
+
+--- Sample 2 ---
+The little cat decided to teach the little bird how to play the trumpet. They practiced together and practiced with the trumpet. Soon, they were ready to play a beautiful song for their friends.
+One day, while they were playing the trumpet, the little bird taught the little cat how to play. The little cat learned the very quickly and was able to play the trumpet even better than before. Everyone in the land was very happy and surprised. The little bird taught them that even when you are grumpy, you can still learn and play.
+The moral of the story is that we should be kind and proud of who we are. When we try our best, we can achieve great things and become better friends.
+<|endoftext|>
+
+Once upon a time there was a dragon. He was very sad and he wanted a friend. But he didn't have a friend. Every day he tried to fly but he was too slow. The other dragons laughed at him and made him really worry. 
+One day the
+
+--- Sample 3 ---
+The little cat was not scared anymore. She knew she could do it. The little cat jumped high into the air and got the ball back. The little cat was so happy and said, "Thank you, big dog, for helping me." The big dog smiled and said, "You're welcome, little cat." They became good friends and played together every day.
+<|endoftext|>
+
+
+Tim and Lily were playing in the park. They liked to pretend they were heroes and villains. Tim was a loyal villain and Lily was a robber. Lily had a big bag of money and a wand. They ran around the park, jumping on the trees and chasing each other.
+One day, they saw a big dog in the park. The dog had a collar with a tag that said "Rex". The dog was angry and hungry. It growled and jumped at Tim and Lily. Tim and Lily were scared and tried to run away.
+But the dog was faster and smarter. It chased them around
+============================================================

@@ -1,0 +1,83 @@
+_wandb:
+    value:
+        cli_version: 0.21.2
+        m: []
+        python_version: 3.12.7
+        t:
+            "1":
+                - 1
+            "3":
+                - 13
+                - 16
+            "4": 3.12.7
+            "5": 0.21.2
+            "8":
+                - 2
+            "12": 0.21.2
+            "13": linux-x86_64
+batch_size:
+    value: 64
+beta1:
+    value: 0.9
+beta2:
+    value: 0.999
+checkpoint_dir:
+    value: checkpoints/owt_gpt2small
+checkpoint_interval:
+    value: 1000
+config:
+    value: gpt2-small
+context_length:
+    value: null
+d_ff:
+    value: null
+d_model:
+    value: null
+device:
+    value: cuda
+eps:
+    value: 1e-08
+eval_batches:
+    value: 20
+eval_interval:
+    value: 500
+ffn_type:
+    value: swiglu
+log_interval:
+    value: 100
+lr:
+    value: 0.001
+max_grad_norm:
+    value: 1
+max_steps:
+    value: 5000
+min_lr:
+    value: 0.0001
+num_heads:
+    value: null
+num_layers:
+    value: null
+remove_rmsnorm:
+    value: false
+remove_rope:
+    value: false
+resume:
+    value: null
+rope_theta:
+    value: null
+run_name:
+    value: owt_gpt2small
+train_data:
+    value: data/owt_train_encoded.npy
+use_post_norm:
+    value: false
+val_data:
+    value: data/owt_valid_encoded.npy
+vocab_size:
+    value: null
+wandb:
+    value: true
+warmup_steps:
+    value: 500
+weight_decay:
+    value: 0.1
