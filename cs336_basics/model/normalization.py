@@ -47,7 +47,7 @@ class RMSNorm(nn.Module):
         # TODO: Initialize learnable gain parameter of shape (d_model,)
         # Initialize to ones
         # Hint: Use nn.Parameter with torch.ones
-        self.gain = nn.Parameter(torch.ones(d_model, device=device, dtype=dtype))
+        self.weight = nn.Parameter(torch.ones(d_model, device=device, dtype=dtype))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -70,7 +70,7 @@ class RMSNorm(nn.Module):
         # 4. Normalize: x / RMS
         normalized = x / rms
         # 5. Apply gain: normalized * self.gain
-        output = normalized * self.gain
+        output = normalized * self.weight
         # 6. Cast back to original dtype
         # Hint: Use torch.mean, torch.sqrt for RMS calculation
         return output.to(original_dtype)

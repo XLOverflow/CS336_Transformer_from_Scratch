@@ -53,9 +53,12 @@ class TransformerBlock(nn.Module):
 
         # TODO: Initialize components
         # 1. Two RMSNorm layers (one before attention, one before FFN)
+        self.norm1 = RMSNorm(d_model, device=device, dtype=dtype)
+        self.norm2 = RMSNorm(d_model, device=device, dtype=dtype)
         # 2. MultiHeadSelfAttention
+        self.mha = MultiHeadSelfAttention(d_model, num_heads, rope=rope, device=device, dtype=dtype)
         # 3. SwiGLU feed-forward network
-        raise NotImplementedError("Initialize norm layers, attention, and FFN")
+        self.ffn = SwiGLU(d_model, d_ff, device=device, dtype=dtype)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -71,6 +74,7 @@ class TransformerBlock(nn.Module):
         # Steps:
         # 1. Attention sub-layer:
         #    z = x + self.attention(self.norm1(x))
+        z = x + self.mha(self.norm1(x))
         # 2. FFN sub-layer:
         #    y = z + self.ffn(self.norm2(z))
-        raise NotImplementedError("Implement Transformer block forward pass")
+        return z + self.ffn(self.norm2(z))

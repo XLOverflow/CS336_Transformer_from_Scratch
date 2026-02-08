@@ -76,13 +76,21 @@ class TransformerLM(nn.Module):
 
         # TODO: Initialize components
         # 1. Token embedding: Embedding(vocab_size, d_model)
+        self.token_embedding = Embedding(vocab_size, d_model, device=device, dtype=dtype)
         # 2. Shared RoPE module: RotaryPositionalEmbedding(rope_theta, d_k, context_length)
-        #    where d_k = d_model // num_heads
+        d_k = d_model // num_heads
+        self.rope = RotaryPositionalEmbedding(rope_theta, d_k, context_length, device=device)
         # 3. Transformer blocks: nn.ModuleList of TransformerBlock
-        #    Create num_layers blocks, all sharing the same RoPE
+        self.blocks = nn.ModuleList(
+            [
+                TransformerBlock(d_model, num_heads, d_ff, rope=self.rope, device=device, dtype=dtype)
+                for _ in range(num_layers)
+            ]
+        )
         # 4. Final normalization: RMSNorm(d_model)
+        self.final_norm = RMSNorm(d_model, device=device, dtype=dtype)
         # 5. Output projection (LM head): Linear(d_model, vocab_size)
-        raise NotImplementedError("Initialize all model components")
+        self.lm_head = Linear(d_model, vocab_size, device=device, dtype=dtype)
 
     def forward(self, token_ids: torch.Tensor) -> torch.Tensor:
         """
@@ -98,14 +106,18 @@ class TransformerLM(nn.Module):
         # Steps:
         # 1. Embed tokens: x = self.token_embedding(token_ids)
         #    Shape: (batch_size, seq_len, d_model)
+        x = self.token_embedding(token_ids)
         # 2. Pass through Transformer blocks sequentially
         #    for block in self.blocks:
         #        x = block(x)
+        for block in self.blocks:
+            x = block(x)
         # 3. Apply final normalization: x = self.final_norm(x)
+        x = self.final_norm(x)
         # 4. Project to vocabulary: logits = self.lm_head(x)
         #    Shape: (batch_size, seq_len, vocab_size)
-        # Note: DO NOT apply softmax - return raw logits
-        raise NotImplementedError("Implement forward pass")
+        logits = self.lm_head(x)
+        return logits
 
     def generate(
         self,
