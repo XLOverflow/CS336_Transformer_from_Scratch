@@ -23,7 +23,6 @@ def softmax(x: torch.Tensor, dim: int = -1) -> torch.Tensor:
     Returns:
         Softmax probabilities
     """
-    # TODO: Implement numerically stable softmax
     # Steps:
     # 1. Subtract max value along dim for stability
     x_max = x.max(dim=dim, keepdim=True).values
@@ -79,7 +78,6 @@ class ScaledDotProductAttention(nn.Module):
         Returns:
             Attention output (..., seq_len_q, d_v)
         """
-        # TODO: Implement scaled dot-product attention
         # Steps:
         # 1. Compute attention scores: QK^T / sqrt(d_k)
         #    Hint: Use einsum or @ with appropriate transposes
@@ -128,7 +126,7 @@ class MultiHeadSelfAttention(nn.Module):
         self.rope = rope
         self.attention = ScaledDotProductAttention()
 
-        # TODO: Initialize projection matrices
+        # Initialize projection matrices
         # - W_q: projects to query (d_model -> d_model)
         # - W_k: projects to key (d_model -> d_model)
         # - W_v: projects to value (d_model -> d_model)
@@ -158,7 +156,7 @@ class MultiHeadSelfAttention(nn.Module):
         """
         batch_size, seq_len, d_model = x.shape
 
-        # TODO: Implement multi-head self-attention
+        # Implement multi-head self-attention
         # Steps:
         # 1. Project to Q, K, V: shape (batch, seq_len, d_model)
         Q = self.W_q(x)

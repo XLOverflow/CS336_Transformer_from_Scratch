@@ -181,4 +181,4 @@ if __name__ == "__main__":
         print("=" * 80)
     except NotImplementedError as e:
         print(f"\n⚠️  Some components not yet implemented: {e}")
-        print("Please implement the TODOs in the model files.")
+        print("Please implement the missing components in the model files.")

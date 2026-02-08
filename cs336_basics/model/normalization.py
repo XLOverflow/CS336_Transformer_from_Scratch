@@ -44,7 +44,7 @@ class RMSNorm(nn.Module):
         self.d_model = d_model
         self.eps = eps
 
-        # TODO: Initialize learnable gain parameter of shape (d_model,)
+        # Initialize learnable gain parameter of shape (d_model,)
         # Initialize to ones
         # Hint: Use nn.Parameter with torch.ones
         self.weight = nn.Parameter(torch.ones(d_model, device=device, dtype=dtype))
@@ -59,7 +59,7 @@ class RMSNorm(nn.Module):
         Returns:
             Normalized tensor of same shape
         """
-        # TODO: Implement RMSNorm
+        # Implement RMSNorm
         # Steps:
         # 1. Save original dtype
         original_dtype = x.dtype

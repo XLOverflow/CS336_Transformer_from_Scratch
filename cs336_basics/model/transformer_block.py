@@ -51,7 +51,7 @@ class TransformerBlock(nn.Module):
     ):
         super().__init__()
 
-        # TODO: Initialize components
+        # Initialize components
         # 1. Two RMSNorm layers (one before attention, one before FFN)
         self.norm1 = RMSNorm(d_model, device=device, dtype=dtype)
         self.norm2 = RMSNorm(d_model, device=device, dtype=dtype)
@@ -70,7 +70,7 @@ class TransformerBlock(nn.Module):
         Returns:
             Output tensor (batch_size, seq_len, d_model)
         """
-        # TODO: Implement pre-norm Transformer block
+        # Implement pre-norm Transformer block
         # Steps:
         # 1. Attention sub-layer:
         #    z = x + self.attention(self.norm1(x))

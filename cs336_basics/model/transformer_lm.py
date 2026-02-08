@@ -74,7 +74,7 @@ class TransformerLM(nn.Module):
         self.num_heads = num_heads
         self.d_ff = d_ff
 
-        # TODO: Initialize components
+        # Initialize components
         # 1. Token embedding: Embedding(vocab_size, d_model)
         self.token_embedding = Embedding(vocab_size, d_model, device=device, dtype=dtype)
         # 2. Shared RoPE module: RotaryPositionalEmbedding(rope_theta, d_k, context_length)
@@ -102,7 +102,7 @@ class TransformerLM(nn.Module):
         Returns:
             Logits over vocabulary (batch_size, seq_len, vocab_size)
         """
-        # TODO: Implement forward pass
+        # Implement forward pass
         # Steps:
         # 1. Embed tokens: x = self.token_embedding(token_ids)
         #    Shape: (batch_size, seq_len, d_model)
@@ -140,7 +140,7 @@ class TransformerLM(nn.Module):
         Returns:
             Generated token IDs (batch_size, prompt_len + generated_len)
         """
-        # TODO: Implement autoregressive generation
+        # Implement autoregressive generation
         # Steps:
         # 1. Start with prompt_ids
         # 2. For each step up to max_new_tokens:

@@ -46,7 +46,7 @@ class SwiGLU(nn.Module):
         self.d_model = d_model
         self.d_ff = d_ff
 
-        # TODO: Initialize three linear layers
+        # Initialize three linear layers
         # - W1: d_model -> d_ff (for SiLU branch)
         # - W2: d_ff -> d_model (output projection)
         # - W3: d_model -> d_ff (for gating branch)
@@ -65,7 +65,7 @@ class SwiGLU(nn.Module):
         Returns:
             Output tensor (batch_size, seq_len, d_model)
         """
-        # TODO: Implement SwiGLU
+        # Implement SwiGLU
         # Steps:
         # 1. Compute gate = SiLU(W1(x))
         #    SiLU(z) = z * sigmoid(z) = z / (1 + exp(-z))

@@ -46,8 +46,7 @@ class RotaryPositionalEmbedding(nn.Module):
         self.d_k = d_k
         self.max_seq_len = max_seq_len
 
-        # TODO: Precompute sin and cos values for efficiency
-        # 1. Compute angles: theta_k = theta^(-2k/d_k) for k=0..d_k/2-1
+        # Compute angles: theta_k = theta^(-2k/d_k) for k=0..d_k/2-1
         theta_k = self.theta ** (-2 * torch.arange(self.d_k // 2, device=device) / self.d_k)
         # 2. Compute positions: 0 to max_seq_len-1
         positions = torch.arange(self.max_seq_len, device=device).unsqueeze(1)
@@ -72,7 +71,7 @@ class RotaryPositionalEmbedding(nn.Module):
         Returns:
             Rotated tensor of same shape as x
         """
-        # TODO: Apply RoPE rotation
+        # Apply RoPE rotation
         # Steps:
         # 1. Slice precomputed sin/cos using token_positions
         sin = self.sin[token_positions]
