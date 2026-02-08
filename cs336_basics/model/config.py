@@ -85,7 +85,7 @@ class GPT2MediumConfig(TransformerConfig):
     d_model: int = 1024
     num_layers: int = 24
     num_heads: int = 16
-    d_ff: int = 2730  # ≈ 8/3 * 1024, rounded to multiple of 64
+    d_ff: int = 2752  # ≈ 8/3 * 1024, rounded to multiple of 64
 
 
 @dataclass

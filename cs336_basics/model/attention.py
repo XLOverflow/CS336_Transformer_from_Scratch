@@ -140,7 +140,7 @@ class MultiHeadSelfAttention(nn.Module):
         # Create causal mask (lower triangular matrix)
         if rope is not None:
             max_seq_len = rope.max_seq_len
-            self.register_buffer("causal_mask", torch.tril(torch.ones(max_seq_len, max_seq_len, dtype=torch.bool)), persistent=False)
+            self.register_buffer("causal_mask", torch.tril(torch.ones(max_seq_len, max_seq_len, dtype=torch.bool, device=device)), persistent=False)
         else:
             self.causal_mask = None
 
