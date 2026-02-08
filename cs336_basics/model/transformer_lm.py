@@ -143,6 +143,7 @@ class TransformerLM(nn.Module):
         # Implement autoregressive generation
         # Steps:
         # 1. Start with prompt_ids
+        generated = prompt_ids
         # 2. For each step up to max_new_tokens:
         #    a. Get logits for current sequence
         #    b. Take logits at last position: logits[:, -1, :]
@@ -152,8 +153,24 @@ class TransformerLM(nn.Module):
         #    f. Sample next token from distribution
         #    g. Append to sequence
         #    h. If generated eos_token_id, stop
+        for _ in range(max_new_tokens):
+            input_ids = generated[:, -self.context_length :]
+            logits = self.forward(input_ids)
+            next_token_logits = logits[:, -1, :] / temperature
+            probs = torch.softmax(next_token_logits, dim=-1)
+            if top_p is not None:
+                sorted_probs, sorted_indices = torch.sort(probs, descending=True)
+                cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+                sorted_mask = cumulative_probs - sorted_probs > top_p
+                sorted_probs[sorted_mask] = 0.0
+                probs = torch.zeros_like(probs).scatter_(1, sorted_indices, sorted_probs)
+                probs = probs / probs.sum(dim=-1, keepdim=True)
+            next_token = torch.multinomial(probs, num_samples=1)
+            generated = torch.cat((generated, next_token), dim=1)
+            if eos_token_id is not None and (next_token == eos_token_id).any():
+                break
         # 3. Return full sequence
-        raise NotImplementedError("Implement text generation")
+        return generated
 
     def count_parameters(self) -> int:
         """
