@@ -64,6 +64,11 @@ class TransformerLM(nn.Module):
         rope_theta: float = 10000.0,
         device: Optional[torch.device] = None,
         dtype: Optional[torch.dtype] = None,
+        # Ablation options
+        norm_type: str = "rmsnorm",      # "rmsnorm" or "none"
+        use_post_norm: bool = False,      # True = post-norm, False = pre-norm
+        use_rope: bool = True,            # False = NoPE (no positional encoding)
+        ffn_type: str = "swiglu",         # "swiglu" or "silu"
     ):
         super().__init__()
 
@@ -77,18 +82,28 @@ class TransformerLM(nn.Module):
         # Initialize components
         # 1. Token embedding: Embedding(vocab_size, d_model)
         self.token_embedding = Embedding(vocab_size, d_model, device=device, dtype=dtype)
-        # 2. Shared RoPE module: RotaryPositionalEmbedding(rope_theta, d_k, context_length)
+        # 2. Shared RoPE module (or None for NoPE ablation)
         d_k = d_model // num_heads
-        self.rope = RotaryPositionalEmbedding(rope_theta, d_k, context_length, device=device)
+        if use_rope:
+            self.rope = RotaryPositionalEmbedding(rope_theta, d_k, context_length, device=device)
+        else:
+            self.rope = None
         # 3. Transformer blocks: nn.ModuleList of TransformerBlock
         self.blocks = nn.ModuleList(
             [
-                TransformerBlock(d_model, num_heads, d_ff, rope=self.rope, device=device, dtype=dtype)
+                TransformerBlock(
+                    d_model, num_heads, d_ff, rope=self.rope,
+                    device=device, dtype=dtype,
+                    norm_type=norm_type, use_post_norm=use_post_norm, ffn_type=ffn_type,
+                )
                 for _ in range(num_layers)
             ]
         )
-        # 4. Final normalization: RMSNorm(d_model)
-        self.final_norm = RMSNorm(d_model, device=device, dtype=dtype)
+        # 4. Final normalization: RMSNorm(d_model) or Identity
+        if norm_type == "rmsnorm":
+            self.final_norm = RMSNorm(d_model, device=device, dtype=dtype)
+        else:
+            self.final_norm = nn.Identity()
         # 5. Output projection (LM head): Linear(d_model, vocab_size)
         self.lm_head = Linear(d_model, vocab_size, device=device, dtype=dtype)
 

@@ -102,6 +102,19 @@ def parse_args():
     # ---- Wandb ----
     parser.add_argument("--wandb", action="store_true",
                         help="Enable Weights & Biases logging")
+    parser.add_argument("--run_name", type=str, default=None,
+                        help="Wandb run name (e.g. 'lr_5e-4', 'ablation_no_rope')")
+
+    # ---- Ablations ----
+    parser.add_argument("--remove_rmsnorm", action="store_true",
+                        help="Replace RMSNorm with Identity (no normalization)")
+    parser.add_argument("--use_post_norm", action="store_true",
+                        help="Use post-norm instead of pre-norm")
+    parser.add_argument("--remove_rope", action="store_true",
+                        help="Remove RoPE (NoPE: no positional encoding)")
+    parser.add_argument("--ffn_type", type=str, default="swiglu",
+                        choices=["swiglu", "silu"],
+                        help="FFN type: swiglu (default) or silu (standard 2-layer)")
 
     # ---- Device & resume ----
     parser.add_argument("--device", type=str,
@@ -198,12 +211,14 @@ def train(args):
         wandb.init(
             project=os.environ.get("WANDB_PROJECT", "cs336-assignment1"),
             entity=os.environ.get("WANDB_ENTITY", None),
+            name=args.run_name,
             config=vars(args),
         )
 
     # ---------------------------------------------------------------
     # 2. Create model
     # ---------------------------------------------------------------
+    norm_type = "none" if args.remove_rmsnorm else "rmsnorm"
     model = TransformerLM(
         vocab_size=config.vocab_size,
         context_length=config.context_length,
@@ -213,6 +228,10 @@ def train(args):
         d_ff=config.d_ff,
         rope_theta=config.rope_theta,
         device=device,
+        norm_type=norm_type,
+        use_post_norm=args.use_post_norm,
+        use_rope=not args.remove_rope,
+        ffn_type=args.ffn_type,
     )
     num_params = sum(p.numel() for p in model.parameters())
     print(f"Model parameters: {num_params:,}")

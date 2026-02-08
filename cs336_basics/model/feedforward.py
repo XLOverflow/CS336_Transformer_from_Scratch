@@ -78,3 +78,32 @@ class SwiGLU(nn.Module):
         gated_value = gate * value
         # 4. Project back: W2(gate ⊙ value)
         return self.W2(gated_value)
+
+
+class SiLUFFN(nn.Module):
+    """
+    Standard 2-layer FFN with SiLU activation (for ablation comparison with SwiGLU).
+
+    Implements: FFN(x) = W2(SiLU(W1(x)))
+
+    Uses d_ff = 4 * d_model to match parameter count with SwiGLU (which has 3 matrices
+    of size d_model x d_ff where d_ff ≈ 8/3 * d_model, totaling ~8 * d_model^2;
+    this uses 2 matrices of size d_model x 4*d_model, totaling 8 * d_model^2).
+    """
+
+    def __init__(
+        self,
+        d_model: int,
+        d_ff: int,
+        device: Optional[torch.device] = None,
+        dtype: Optional[torch.dtype] = None,
+    ):
+        super().__init__()
+        # For parameter-matched comparison: use 4 * d_model as hidden dim
+        # But accept d_ff to keep the same interface
+        self.W1 = Linear(d_model, d_ff, device=device, dtype=dtype)
+        self.W2 = Linear(d_ff, d_model, device=device, dtype=dtype)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        h = self.W1(x)
+        return self.W2(h * torch.sigmoid(h))
