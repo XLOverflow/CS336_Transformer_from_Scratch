@@ -28,6 +28,8 @@ import math
 import os
 import time
 
+from tqdm import tqdm
+
 import numpy as np
 import torch
 from dotenv import load_dotenv
@@ -179,9 +181,9 @@ def train(args):
     device = args.device
     os.makedirs(args.checkpoint_dir, exist_ok=True)
 
-    # Load datasets with memory mapping
-    train_data = np.load(args.train_data, mmap_mode="r")
-    val_data = np.load(args.val_data, mmap_mode="r")
+    # Load datasets with memory mapping (raw memmap, uint16 from BPE encoder)
+    train_data = np.memmap(args.train_data, dtype=np.uint16, mode="r")
+    val_data = np.memmap(args.val_data, dtype=np.uint16, mode="r")
 
     print("=" * 60)
     print(f"Model config: {config}")
@@ -240,7 +242,8 @@ def train(args):
     model.train()
     start_time = time.time()
 
-    for step in range(start_step, args.max_steps):
+    pbar = tqdm(range(start_step, args.max_steps), desc="Training", initial=start_step, total=args.max_steps)
+    for step in pbar:
         # a. Update learning rate
         lr = get_lr_cosine_schedule(step, args.lr, args.min_lr, args.warmup_steps, args.max_steps)
         for group in optimizer.param_groups:
@@ -255,10 +258,13 @@ def train(args):
         optimizer.step()
         optimizer.zero_grad()
 
+        # Update progress bar
+        pbar.set_postfix(loss=f"{loss.item():.4f}", lr=f"{lr:.6f}")
+
         # i. Log training loss
         if step % args.log_interval == 0:
             elapsed = time.time() - start_time
-            print(f"step {step:>6d} | loss {loss.item():.4f} | lr {lr:.6f} | time {elapsed:.1f}s")
+            tqdm.write(f"step {step:>6d} | loss {loss.item():.4f} | lr {lr:.6f} | time {elapsed:.1f}s")
             if args.wandb:
                 wandb.log({
                     "train/loss": loss.item(),
@@ -271,7 +277,7 @@ def train(args):
         # j. Evaluate on validation set
         if step > 0 and step % args.eval_interval == 0:
             val_loss = evaluate(model, val_data, args.batch_size, config.context_length, device, args.eval_batches)
-            print(f"  >>> val loss {val_loss:.4f} | val ppl {math.exp(val_loss):.2f}")
+            tqdm.write(f"  >>> val loss {val_loss:.4f} | val ppl {math.exp(val_loss):.2f}")
             if args.wandb:
                 wandb.log({"val/loss": val_loss, "val/perplexity": math.exp(val_loss), "val/step": step})
 
@@ -279,7 +285,7 @@ def train(args):
         if step > 0 and step % args.checkpoint_interval == 0:
             ckpt_path = os.path.join(args.checkpoint_dir, f"step_{step}.pt")
             save_checkpoint(model, optimizer, step, ckpt_path)
-            print(f"  >>> checkpoint saved to {ckpt_path}")
+            tqdm.write(f"  >>> checkpoint saved to {ckpt_path}")
 
     # ---------------------------------------------------------------
     # 6. Final eval & save
