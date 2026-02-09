@@ -1,5 +1,9 @@
 # CS336 Spring 2025 Assignment 1: Basics
 
+📝 **Blog Post**: For a detailed walkthrough of this assignment:
+- 🇺🇸 [English version](https://xloverflow.github.io/2026/02/09/CS336/CS336-Assignment-1-Building-a-Transformer-Language-Model-from-Scratch/)
+- 🇨🇳 [中文版本](https://xloverflow.github.io/zh/2026/02/09/CS336/CS336-Assignment-1-Building-a-Transformer-Language-Model-from-Scratch/)
+
 For a full description of the assignment, see the assignment handout at
 [cs336_spring2025_assignment1_basics.pdf](./cs336_spring2025_assignment1_basics.pdf)
 
